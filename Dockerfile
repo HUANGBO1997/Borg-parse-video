@@ -3,6 +3,7 @@ FROM golang:alpine AS builder
 LABEL stage=gobuilder
 
 ENV CGO_ENABLED 0
+# 通过环境变量设置 Go 模块代理（推荐显式声明）
 ENV GOPROXY https://goproxy.cn,direct
 
 RUN apk update --no-cache && apk add --no-cache tzdata
@@ -11,10 +12,10 @@ WORKDIR /build
 
 ADD go.mod .
 ADD go.sum .
-RUN go mod download
+# 显式设置 Go 代理（双重保障，避免多阶段构建的潜在问题）
+RUN go env -w GOPROXY=https://goproxy.cn,direct && go mod download
 COPY . .
 RUN go build -ldflags="-s -w" -o /app/main ./main.go
-
 
 FROM scratch
 
